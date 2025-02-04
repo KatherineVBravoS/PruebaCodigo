@@ -85,7 +85,7 @@ jobs:
 
     - name: Deploy Lambda and API Gateway
       run: |
-        aws lambda update-function-code --function-name your-lambda-function-name --s3-bucket lambda-bucket23 --s3-key lambda.zip
+        aws lambda update-function-code --function-name mi-funcion-lambda --s3-bucket lambda-bucket23 --s3-key lambda.zip
         aws apigateway create-deployment --rest-api-id l8lxt8gntl --stage-name prod
 
     - name: Test API Gateway
