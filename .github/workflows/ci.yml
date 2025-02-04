@@ -1,59 +1,90 @@
-name: CI/CD Pipeline Prueba
+name: CI/CD Pipeline for AWS Lambda, API Gateway, and Terraform
 
 on:
   push:
     branches:
-      - master
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
+  # Etapa de Construcción (Build)
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      # Step 1: Checkout del código
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up AWS CLI
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
+      # Step 2: Configurar AWS CLI con AWS Credentials
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v1
-      with:
-        terraform_version: 1.3.9
+      # Step 3: Instalar Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: '1.2.5'
 
-    - name: Terraform init
-      run: terraform init
+      # Step 4: Inicializar Terraform
+      - name: Terraform Init
+        run: terraform init
 
-    - name: Terraform plan
-      run: terraform plan
+      # Step 5: Validar Terraform
+      - name: Terraform Validate
+        run: terraform validate
 
-    
+      # Step 6: Crear un Plan de Terraform
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
 
+      # Step 7: Aplicar el Plan de Terraform (Inicia la infraestructura de AWS)
+      #- name: Terraform Apply
+      #  run: terraform apply -auto-approve tfplan
+
+  # Etapa de Despliegue (Deploy)
   deploy:
     runs-on: ubuntu-latest
     needs: build
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      # Step 1: Checkout del código
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Install dependencies
-      run: |
-        pip install awscli boto3
+      # Step 2: Configurar AWS CLI (para el despliegue)
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-    - name: Upload to S3
-      run: |
-        aws s3 cp ./lambda.zip s3://lambda-bucket23/lambda.zip
+      # Step 3: Subir Código Lambda a S3 (si se necesita)
+      - name: Upload Lambda code to S3
+        run: aws s3 cp ./lambda.zip s3://lambda-bucket23/lambda.zip
 
-    - name: Deploy Lambda and API Gateway
-      run: |
-        aws lambda update-function-code --function-name your-lambda-function-name --s3-bucket lambda-bucket23 --s3-key lambda.zip
-        aws apigateway create-deployment --rest-api-id l8lxt8gntl --stage-name prod
+      # Step 4: Actualizar Lambda
+      - name: Update Lambda Function
+        run: |
+          aws lambda update-function-code \
+            --function-name mi-funcion-lambda \
+            --s3-bucket lambda-bucket23 \
+            --s3-key lambda.zip
 
-    - name: Test API Gateway
-      run: |
-        curl -X GET https://l8lxt8gntl.execute-api.us-east-1.amazonaws.com/proda
+      # Step 5: Actualizar API Gateway (si se requiere)
+      - name: Deploy API Gateway
+        run: |
+          aws apigateway create-deployment \
+            --rest-api-id l8lxt8gntl \
+            --stage-name prod
+
+      # Step 6: Probar API (opcional)
+      - name: Test API
+        run: |
+          curl -X GET https://l8lxt8gntl.execute-api.us-east-1.amazonaws.com/prod/lambda
+
