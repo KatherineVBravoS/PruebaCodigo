@@ -13,7 +13,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    
+     
+    - name: Verify AWS credentials file
+     run: cat ~/.aws/credentials || echo "AWS credentials file not found"
+
     - name: Debug AWS CLI
       run: |
         aws sts get-caller-identity --profile default
@@ -30,18 +33,8 @@ jobs:
         echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
         echo "[default]" > ~/.aws/config
         echo "region=us-east-1" >> ~/.aws/config
-    
-    - name: Verify AWS credentials
-      run: cat ~/.aws/credentials
-        
-
-    - name: Verify AWS authentication
-      run: aws sts get-caller-identity
-
    
-
-
-
+       
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v1
       with:
