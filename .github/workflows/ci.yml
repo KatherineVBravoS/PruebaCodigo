@@ -1,62 +1,60 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline Prueba
 
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
+    - name: Set up AWS CLI
+      run: |
+        echo "[profile default]" > ~/.aws/config
+        echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/config
+        echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/config
+        echo "region=us-east-1" >> ~/.aws/config
 
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.3.9
 
-      - name: Zip Lambda
-        run: |
-          zip -r lambda.zip .
+    - name: Terraform init
+      run: terraform init
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: lambda-artifact
-          path: path/to/your/artifact
+    - name: Terraform plan
+      run: terraform plan
 
+    - name: Terraform apply
+      run: terraform apply -auto-approve
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Download artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: lambda-zip
+    - name: Install dependencies
+      run: |
+        pip install awscli boto3
 
-      - name: Configure AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+    - name: Upload to S3
+      run: |
+        aws s3 cp ./lambda.zip s3://lambda-bucket23/lambda.zip
 
-      - name: Deploy Lambda function
-        run: |
-          aws lambda update-function-code --function-name <mi-funcion-lambda> --zip-file fileb://lambda.zip
+    - name: Deploy Lambda and API Gateway
+      run: |
+        aws lambda update-function-code --function-name your-lambda-function-name --s3-bucket lambda-bucket23 --s3-key lambda.zip
+        aws apigateway create-deployment --rest-api-id l8lxt8gntl --stage-name prod
 
-      - name: Deploy API Gateway
-        run: |
-          aws apigateway create-deployment --rest-api-id <l8lxt8gntl> --stage-name prod
+    - name: Test API Gateway
+      run: |
+        curl -X GET https://l8lxt8gntl.execute-api.us-east-1.amazonaws.com/proda
