@@ -27,10 +27,11 @@ jobs:
           zip -r lambda.zip .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: lambda-zip
-          path: lambda.zip
+          name: lambda-artifact
+          path: path/to/your/artifact
+
 
   deploy:
     runs-on: ubuntu-latest
