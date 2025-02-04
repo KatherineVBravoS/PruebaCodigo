@@ -15,7 +15,7 @@ jobs:
 
      
     - name: Verify AWS credentials file
-     run: cat ~/.aws/credentials || echo "AWS credentials file not found"
+      run: cat ~/.aws/credentials || echo "AWS credentials file not found"
 
     - name: Debug AWS CLI
       run: |
