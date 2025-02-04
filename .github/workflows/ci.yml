@@ -13,10 +13,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-     
-    - name: Verify AWS credentials file
-      run: cat ~/.aws/credentials || echo "AWS credentials file not found"
-
 
     - name: Manually set up AWS credentials
       run: |
@@ -27,11 +23,7 @@ jobs:
         echo "[default]" > ~/.aws/config
         echo "region=us-east-1" >> ~/.aws/config
     
-   
-    - name: Debug AWS CLI
-      run: |
-        aws sts get-caller-identity --profile default
-       
+  
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v1
       with:
@@ -43,6 +35,8 @@ jobs:
     - name: Terraform plan
       run: terraform plan
 
+    #- name: Terraform Apply
+    #  run: terraform apply -auto-approve
     
 
   deploy:
@@ -72,13 +66,6 @@ jobs:
       run: aws sts get-caller-identity
 
 
-
-    - name: Test S3 Upload
-      run: |
-        echo "Test file" > test.txt
-        aws s3 cp test.txt s3://lambda-bucket23/test.txt
-    
-
     - name: Upload to S3
       run: |
         aws s3 cp ./lambda.zip s3://lambda-bucket23/lambda.zip
@@ -90,4 +77,4 @@ jobs:
 
     - name: Test API Gateway
       run: |
-        curl -X GET https://l8lxt8gntl.execute-api.us-east-1.amazonaws.com/proda
+        curl -X GET https://l8lxt8gntl.execute-api.us-east-1.amazonaws.com/prod/lambda
