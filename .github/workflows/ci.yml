@@ -17,15 +17,8 @@ jobs:
     - name: Verify AWS credentials file
       run: cat ~/.aws/credentials || echo "AWS credentials file not found"
 
-    - name: Debug AWS CLI
-      run: |
-        aws sts get-caller-identity --profile default
 
-    - name: Clear old AWS credentials
-      run: rm -rf ~/.aws
-      
-
-    - name: Set up AWS CLI manually
+    - name: Manually set up AWS credentials
       run: |
         mkdir -p ~/.aws
         echo "[default]" > ~/.aws/credentials
@@ -33,7 +26,11 @@ jobs:
         echo "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
         echo "[default]" > ~/.aws/config
         echo "region=us-east-1" >> ~/.aws/config
+    
    
+    - name: Debug AWS CLI
+      run: |
+        aws sts get-caller-identity --profile default
        
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v1
